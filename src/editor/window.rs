@@ -1,7 +1,7 @@
 use std::io::{self, Write, stdout};
 use crossterm::{
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen, DisableLineWrap, EnableLineWrap},
-    cursor::{self, MoveTo}, style::Print,
+    cursor::{self, MoveTo, SetCursorStyle}, style::Print,
     };
 
 pub struct Window {
@@ -47,6 +47,7 @@ impl Window {
             stdout,
             EnterAlternateScreen,
             DisableLineWrap,
+            SetCursorStyle::BlinkingBar,
         ).unwrap();
     }
 
@@ -203,6 +204,7 @@ impl Drop for Window {
             io::stdout(),
             LeaveAlternateScreen,
             EnableLineWrap,
+            SetCursorStyle::DefaultUserShape,
         ).unwrap();
 
         terminal::disable_raw_mode().unwrap();

@@ -42,16 +42,42 @@ impl PieceTable {
         };
 
         // if not found, return an empty space
+        // not ideal, maybe return an Option<char>??
         return ' ';
     }
 
     pub fn insert(&mut self, c: char, index: u16) {
         // add char to the add_buffer
         self.add_buffer.push(c);
+
+        let mut counter: u16 = 0;
+
+        // entry index
+        todo!();
     }
 
-    pub fn delete(&mut self, c: char) {
+    pub fn delete(&mut self, c: char, index: u16) {
+        // entry index
+        todo!();
+    }
 
+    // in which entry does the index exist
+    fn entry_index(&self, index: u16) -> Option<u16> {
+
+        let mut index_counter: u16 = 0;
+        let mut entry_counter: u16 = 0;
+
+        for entry in &self.rows {
+            // found the correct entry
+            if index_counter + entry.length <= index {
+                return Some(entry_counter)
+            } else {
+                index_counter += entry.length;
+            }
+            entry_counter += 1;
+        };
+
+        None
     }
 }
 

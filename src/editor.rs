@@ -2,8 +2,7 @@ use crossterm::event::{KeyEvent, KeyModifiers, KeyCode};
 
 pub mod window;
 pub mod keyboard;
-pub mod file;
-pub mod buffer;
+pub mod piece_table;
 
 pub fn editor() {
 

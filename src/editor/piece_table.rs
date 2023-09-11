@@ -95,8 +95,7 @@ impl PieceTable {
         let mut entry_index: u16 = 0;
         let mut searched_entry: &PieceTableEntry;
         let mut previous_entry: Option<&PieceTableEntry> = None;
-        // the correct index of a char table 
-        let mut correct_index: u16 = 0;
+        let mut relative_index: u16 = 0;
         let mut is_found: bool = false;
 
         if self.rows.len() == 0 {
@@ -107,8 +106,7 @@ impl PieceTable {
         for entry in &self.rows {
             if index <= length_counter + entry.length {
                 is_found = true;
-                // calculate the relative 'correct' index in the entry
-                correct_index = index - length_counter + entry.start_index;
+                relative_index = index - length_counter;
                 searched_entry = entry;
                 break
             } else {
@@ -129,7 +127,7 @@ impl PieceTable {
         };
 
         // start
-        if correct_index == 0 {
+        if relative_index == 0 {
             if previous_entry.is_none() {
                 self.rows.insert(entry_index as usize, new_entry);
                 return;
@@ -146,7 +144,7 @@ impl PieceTable {
             }
         }
         // end
-        else if correct_index == searched_entry.length {
+        else if relative_index == searched_entry.length {
             if self.is_appendable(searched_entry) {
                 self.rows[entry_index as usize] = PieceTableEntry {
                     length: searched_entry.length + 1,
@@ -160,13 +158,13 @@ impl PieceTable {
         
         // middle
         let start_entry = PieceTableEntry {
-            length: correct_index,
+            length: relative_index,
             ..*searched_entry
         };
 
         let end_entry = PieceTableEntry {
-            length: searched_entry.length - correct_index,
-            start_index: searched_entry.start_index + correct_index,
+            length: searched_entry.length - relative_index,
+            start_index: searched_entry.start_index + relative_index,
             ..*searched_entry
         };
         
@@ -180,8 +178,8 @@ impl PieceTable {
         let mut entry_index: u16 = 0;
         let mut searched_entry: &PieceTableEntry;
         let mut previous_entry: Option<&PieceTableEntry> = None;
-        // the correct index of a char table 
-        let mut correct_index: u16 = 0;
+        let mut absolute_index: u16 = 0;
+        let mut relative_index: u16 = 0;
         let mut is_found: bool = false;
 
         if self.rows.len() == 0 {
@@ -193,8 +191,8 @@ impl PieceTable {
         for entry in &self.rows {
             if index <= length_counter + entry.length {
                 is_found = true;
-                // calculate the relative 'correct' index in the entry
-                correct_index = index - length_counter + entry.start_index;
+                absolute_index = index - length_counter + entry.start_index;
+                relative_index = index - length_counter;
                 searched_entry = entry;
                 break
             } else {
@@ -204,14 +202,14 @@ impl PieceTable {
             previous_entry = Some(entry);
         };
 
-        dbg!(correct_index, searched_entry, previous_entry, is_found);
+        dbg!(is_found, index, length_counter, absolute_index, relative_index, searched_entry);
 
         if !is_found {
             return ();
         }
 
-        // // start and end
-        // if correct_index == 0 {
+        // start and end
+        // if correct_index == 1 {
         //     if previous_entry.is_none() {
         //         return;
         //     }
@@ -229,7 +227,7 @@ impl PieceTable {
 
         // // middle
         // let first_part_entry = PieceTableEntry {
-        //     length: correct_index - 1,
+        //     length: correct_index - 2,
         //     ..*searched_entry
         // };
 
@@ -240,6 +238,6 @@ impl PieceTable {
         // };
 
         // self.rows[entry_index as usize] = first_part_entry;
-        // self.rows.insert(entry_index as usize + 1, second_part_entry);
+        // self.rows.insert(entry_index as usize + 2, second_part_entry);
     }
 }

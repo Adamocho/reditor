@@ -38,16 +38,17 @@ impl PieceTable {
     }
 
     fn is_appendable(&self, entry: &PieceTableEntry) -> bool {
+        let add_buffer_length_modified = self.add_buffer.len().checked_sub(2).unwrap() as u16;
         entry.buffer == Buffer::Add && 
         // minus 2 because the add buffer has been appended
-        entry.start_index + entry.length == self.add_buffer.len() as u16 - 2
+        entry.start_index + entry.length ==  add_buffer_length_modified
     }
 
     fn shrink_or_delete_entry(&mut self, entry: PieceTableEntry, index: u16) {
         if entry.length == 1 {
-            self.rows.remove((index as i32 - 1) as usize);
+            self.rows.remove(index.checked_sub(1).unwrap_or(0) as usize);
         } else {
-            self.rows[(index as i32 - 1) as usize] = PieceTableEntry {
+            self.rows[index.checked_sub(1).unwrap_or(0) as usize] = PieceTableEntry {
                 length: entry.length - 1,
                 ..entry
             };
@@ -127,7 +128,7 @@ impl PieceTable {
             let previous_entry = previous_entry.unwrap();
 
             if self.is_appendable(previous_entry) {
-                self.rows[(entry_index as i32 - 1) as usize] = PieceTableEntry {
+                self.rows[entry_index.checked_sub(1).unwrap_or(0) as usize] = PieceTableEntry {
                     length: previous_entry.length + 1,
                     ..*previous_entry
                 };

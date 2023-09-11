@@ -38,10 +38,16 @@ impl PieceTable {
     }
 
     fn is_appendable(&self, entry: &PieceTableEntry) -> bool {
-        let add_buffer_length_modified = self.add_buffer.len().checked_sub(2).unwrap() as u16;
-        entry.buffer == Buffer::Add && 
+        if self.add_buffer.len() <= 2 {
+            return false;
+        }
+
+        // guaranteed this will not panic due to the previous check
+        let add_buffer_length_modified = self.add_buffer.len().checked_sub(2).unwrap();
+
         // minus 2 because the add buffer has been appended
-        entry.start_index + entry.length ==  add_buffer_length_modified
+        entry.buffer == Buffer::Add && 
+        entry.start_index + entry.length == add_buffer_length_modified as u16
     }
 
     fn shrink_or_delete_entry(&mut self, entry: PieceTableEntry, index: u16) {
@@ -194,42 +200,42 @@ impl PieceTable {
             previous_entry = Some(entry);
         };
 
+        dbg!(correct_index, searched_entry, previous_entry, is_found);
+
         if !is_found {
             return ();
         }
 
-        dbg!(correct_index, searched_entry, previous_entry);
+        // // start and end
+        // if correct_index == 0 {
+        //     if previous_entry.is_none() {
+        //         return;
+        //     }
+        //     let previous_entry = previous_entry.unwrap();
+        //     self.shrink_or_delete_entry(previous_entry.clone(), correct_index);
 
-        // start and end
-        if correct_index == 0 {
-            if previous_entry.is_none() {
-                return;
-            }
-            let previous_entry = previous_entry.unwrap();
-            self.shrink_or_delete_entry(previous_entry.clone(), correct_index);
+        //     return;
+        // }
+        // // end
+        // else if correct_index == searched_entry.length {
+        //     self.shrink_or_delete_entry(searched_entry.clone(), correct_index);
 
-            return;
-        }
-        // end
-        else if correct_index == searched_entry.length {
-            self.shrink_or_delete_entry(searched_entry.clone(), correct_index);
+        //     return;
+        // }
 
-            return;
-        }
+        // // middle
+        // let first_part_entry = PieceTableEntry {
+        //     length: correct_index - 1,
+        //     ..*searched_entry
+        // };
 
-        // middle
-        let first_part_entry = PieceTableEntry {
-            length: correct_index - 1,
-            ..*searched_entry
-        };
+        // let second_part_entry = PieceTableEntry {
+        //     length: searched_entry.length - correct_index,
+        //     start_index: searched_entry.start_index + correct_index,
+        //     ..*searched_entry
+        // };
 
-        let second_part_entry = PieceTableEntry {
-            length: searched_entry.length - correct_index,
-            start_index: searched_entry.start_index + correct_index,
-            ..*searched_entry
-        };
-
-        self.rows[entry_index as usize] = first_part_entry;
-        self.rows.insert(entry_index as usize + 1, second_part_entry);
+        // self.rows[entry_index as usize] = first_part_entry;
+        // self.rows.insert(entry_index as usize + 1, second_part_entry);
     }
 }

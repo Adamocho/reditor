@@ -88,6 +88,8 @@ impl PieceTable {
     }
 
     pub fn insert(&mut self, c: char, index: u16) {
+        todo!("Fix the bugs!");
+
         // add char to the add_buffer
         self.add_buffer.push(c);
 
@@ -104,7 +106,7 @@ impl PieceTable {
         searched_entry = &self.rows[0];
 
         for entry in &self.rows {
-            if index <= length_counter + entry.length {
+            if index < length_counter + entry.length {
                 is_found = true;
                 relative_index = index - length_counter;
                 searched_entry = entry;
@@ -144,7 +146,7 @@ impl PieceTable {
             }
         }
         // end
-        else if relative_index == searched_entry.length {
+        else if relative_index == searched_entry.length - 1 {
             if self.is_appendable(searched_entry) {
                 self.rows[entry_index as usize] = PieceTableEntry {
                     length: searched_entry.length + 1,
@@ -189,7 +191,7 @@ impl PieceTable {
         searched_entry = &self.rows[0];
 
         for entry in &self.rows {
-            if index <= length_counter + entry.length {
+            if index < length_counter + entry.length {
                 is_found = true;
                 absolute_index = index - length_counter + entry.start_index;
                 relative_index = index - length_counter;
@@ -201,43 +203,41 @@ impl PieceTable {
             entry_index += 1;
             previous_entry = Some(entry);
         };
-
-        dbg!(is_found, index, length_counter, absolute_index, relative_index, searched_entry);
-
+        
         if !is_found {
             return ();
         }
+        
+        // start
+        if relative_index == 0 {
+            if let Some(previous_entry) = previous_entry {
+                self.shrink_or_delete_entry(previous_entry.clone(), entry_index);
+            }
+            return;
+        }
+        // end
+        else if relative_index == searched_entry.length - 1 {
+            self.shrink_or_delete_entry(searched_entry.clone(), entry_index);
 
-        // start and end
-        // if correct_index == 1 {
-        //     if previous_entry.is_none() {
-        //         return;
-        //     }
-        //     let previous_entry = previous_entry.unwrap();
-        //     self.shrink_or_delete_entry(previous_entry.clone(), correct_index);
+            return;
+        }
+        
+        // middle
+        let first_part_entry = PieceTableEntry {
+            length: relative_index - 1,
+            ..*searched_entry
+        };
+        let second_part_entry = PieceTableEntry {
+            length: searched_entry.length - relative_index,
+            start_index: searched_entry.start_index + relative_index,
+            ..*searched_entry
+        };
 
-        //     return;
-        // }
-        // // end
-        // else if correct_index == searched_entry.length {
-        //     self.shrink_or_delete_entry(searched_entry.clone(), correct_index);
-
-        //     return;
-        // }
-
-        // // middle
-        // let first_part_entry = PieceTableEntry {
-        //     length: correct_index - 2,
-        //     ..*searched_entry
-        // };
-
-        // let second_part_entry = PieceTableEntry {
-        //     length: searched_entry.length - correct_index,
-        //     start_index: searched_entry.start_index + correct_index,
-        //     ..*searched_entry
-        // };
-
-        // self.rows[entry_index as usize] = first_part_entry;
-        // self.rows.insert(entry_index as usize + 2, second_part_entry);
+        if first_part_entry.length == 0 {
+            self.rows[entry_index as usize] = second_part_entry;
+        } else {
+            self.rows[entry_index as usize] = first_part_entry;
+            self.rows.insert(entry_index as usize + 1, second_part_entry);
+        }
     }
 }

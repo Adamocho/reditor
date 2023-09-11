@@ -51,10 +51,14 @@ impl PieceTable {
     }
 
     fn shrink_or_delete_entry(&mut self, entry: PieceTableEntry, index: u16) {
-        if entry.length == 1 {
-            self.rows.remove(index.checked_sub(1).unwrap_or(0) as usize);
+        if self.rows.get(index as usize).is_none() {
+            return;
+        }
+
+        if entry.length < 2 {
+            self.rows.remove(index as usize);
         } else {
-            self.rows[index.checked_sub(1).unwrap_or(0) as usize] = PieceTableEntry {
+            self.rows[index as usize] = PieceTableEntry {
                 length: entry.length - 1,
                 ..entry
             };

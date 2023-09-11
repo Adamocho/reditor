@@ -38,12 +38,12 @@ impl PieceTable {
     }
 
     fn is_appendable(&self, entry: &PieceTableEntry) -> bool {
-        if self.add_buffer.len() <= 2 {
+        if self.add_buffer.len() < 2 {
             return false;
         }
 
         // guaranteed this will not panic due to the previous check
-        let add_buffer_length_modified = self.add_buffer.len().checked_sub(2).unwrap();
+        let add_buffer_length_modified = self.add_buffer.len().checked_sub(1).unwrap();
 
         // minus 2 because the add buffer has been appended
         entry.buffer == Buffer::Add && 
@@ -88,8 +88,6 @@ impl PieceTable {
     }
 
     pub fn insert(&mut self, c: char, index: u16) {
-        todo!("Fix the bugs!");
-
         // add char to the add_buffer
         self.add_buffer.push(c);
 
@@ -125,25 +123,27 @@ impl PieceTable {
         let new_entry = PieceTableEntry {
             buffer: Buffer::Add,
             length: 1,
-            start_index: self.add_buffer.len() as u16 - 1,
+            start_index: self.add_buffer.len().checked_sub(1).unwrap_or(0) as u16,
         };
 
         // start
         if relative_index == 0 {
-            if previous_entry.is_none() {
-                self.rows.insert(entry_index as usize, new_entry);
-                return;
-            }
-
-            let previous_entry = previous_entry.unwrap();
-
-            if self.is_appendable(previous_entry) {
-                self.rows[entry_index.checked_sub(1).unwrap_or(0) as usize] = PieceTableEntry {
-                    length: previous_entry.length + 1,
-                    ..*previous_entry
+            if let Some(previous_entry) = previous_entry {
+                if self.is_appendable(previous_entry) {
+                    self.rows[entry_index.checked_sub(1).unwrap() as usize] = PieceTableEntry {
+                        length: previous_entry.length + 1,
+                        ..*previous_entry
+                    };
+                }
+            } else if self.is_appendable(searched_entry) {
+                self.rows[entry_index as usize] = PieceTableEntry {
+                    length: searched_entry.length + 1,
+                    ..*searched_entry
                 };
-                return;
+            } else {
+                self.rows.insert(entry_index as usize, new_entry);
             }
+            return;
         }
         // end
         else if relative_index == searched_entry.length - 1 {
@@ -163,13 +163,12 @@ impl PieceTable {
             length: relative_index,
             ..*searched_entry
         };
-
         let end_entry = PieceTableEntry {
             length: searched_entry.length - relative_index,
             start_index: searched_entry.start_index + relative_index,
             ..*searched_entry
         };
-        
+
         self.rows[entry_index as usize] = start_entry;
         self.rows.insert(entry_index as usize + 1, new_entry);
         self.rows.insert(entry_index as usize + 2, end_entry);
@@ -180,7 +179,6 @@ impl PieceTable {
         let mut entry_index: u16 = 0;
         let mut searched_entry: &PieceTableEntry;
         let mut previous_entry: Option<&PieceTableEntry> = None;
-        let mut absolute_index: u16 = 0;
         let mut relative_index: u16 = 0;
         let mut is_found: bool = false;
 
@@ -193,7 +191,6 @@ impl PieceTable {
         for entry in &self.rows {
             if index < length_counter + entry.length {
                 is_found = true;
-                absolute_index = index - length_counter + entry.start_index;
                 relative_index = index - length_counter;
                 searched_entry = entry;
                 break

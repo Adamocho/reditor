@@ -88,6 +88,11 @@ impl PieceTable {
         let mut correct_index: u16 = 0;
         let mut is_found: bool = false;
 
+        if self.rows.len() == 0 {
+            return;
+        }
+        searched_entry = &self.rows[0];
+
         for entry in &self.rows {
             if index <= length_counter + entry.length {
                 is_found = true;
@@ -104,8 +109,6 @@ impl PieceTable {
 
         if !is_found {
             return ();
-        } else {
-            searched_entry = &self.rows[0];
         }
 
         let new_entry = PieceTableEntry {
@@ -170,6 +173,12 @@ impl PieceTable {
         let mut correct_index: u16 = 0;
         let mut is_found: bool = false;
 
+        if self.rows.len() == 0 {
+            return;
+        }
+
+        searched_entry = &self.rows[0];
+
         for entry in &self.rows {
             if index <= length_counter + entry.length {
                 is_found = true;
@@ -186,8 +195,6 @@ impl PieceTable {
 
         if !is_found {
             return ();
-        } else {
-            searched_entry = &self.rows[0];
         }
 
         dbg!(correct_index, searched_entry, previous_entry);

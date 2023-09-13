@@ -50,35 +50,40 @@ impl PieceTable {
         entry.start_index + entry.length == add_buffer_length_modified as u16
     }
 
-    fn shrink_or_delete_entry(&mut self, entry: PieceTableEntry, index: u16) {
-        if self.rows.get(index as usize).is_none() {
+    fn shrink_or_delete_entry(&mut self, index: u16) {
+        let entry = self.rows.get(index as usize);
+
+        if entry.is_none() {
             return;
         }
+
+        // this cannot panic
+        let entry = entry.unwrap();
 
         if entry.length < 2 {
             self.rows.remove(index as usize);
         } else {
             self.rows[index as usize] = PieceTableEntry {
                 length: entry.length - 1,
-                ..entry
+                buffer: entry.buffer,
+                start_index: entry.start_index,
             };
         }
     }
 
-    fn index(&self, i: u16) -> char {
-        let mut counter: u16 = 0;
+    pub fn index(&self, index: u16) -> char {
+        let mut length_counter: u16 = 0;
+        let absolute_index;
 
         for entry in &self.rows {
-            // found the correct entry
-            if i <= counter + entry.length {
-                let relative_index = i - counter;
-                let correct_index = relative_index + entry.start_index;
+            if index < length_counter + entry.length {
+                absolute_index = index - length_counter + entry.start_index;
                 match entry.buffer {
-                    Buffer::Original => return self.original_buffer.chars().nth(correct_index.into()).unwrap(),
-                    Buffer::Add => return self.add_buffer.chars().nth(correct_index.into()).unwrap(),
+                    Buffer::Original => return self.original_buffer.chars().nth(absolute_index.into()).unwrap_or(' '),
+                    Buffer::Add => return self.add_buffer.chars().nth(absolute_index.into()).unwrap_or(' '),
                 }
             } else {
-                counter += entry.length;
+                length_counter += entry.length;
             }
         };
 
@@ -178,7 +183,6 @@ impl PieceTable {
         let mut length_counter: u16 = 0;
         let mut entry_index: u16 = 0;
         let mut searched_entry: &PieceTableEntry;
-        let mut previous_entry: Option<&PieceTableEntry> = None;
         let mut relative_index: u16 = 0;
         let mut is_found: bool = false;
 
@@ -198,7 +202,6 @@ impl PieceTable {
                 length_counter += entry.length;
             }
             entry_index += 1;
-            previous_entry = Some(entry);
         };
         
         if !is_found {
@@ -207,15 +210,15 @@ impl PieceTable {
         
         // start
         if relative_index == 0 {
-            if let Some(previous_entry) = previous_entry {
-                self.shrink_or_delete_entry(previous_entry.clone(), entry_index);
+            if entry_index > 0 {
+                self.shrink_or_delete_entry(entry_index - 1);
             }
             return;
         }
-        // end
-        else if relative_index == searched_entry.length - 1 {
-            self.shrink_or_delete_entry(searched_entry.clone(), entry_index);
 
+        // end
+        if relative_index == searched_entry.length - 1 {
+            self.shrink_or_delete_entry(entry_index);
             return;
         }
         
@@ -230,11 +233,14 @@ impl PieceTable {
             ..*searched_entry
         };
 
-        if first_part_entry.length == 0 {
-            self.rows[entry_index as usize] = second_part_entry;
-        } else {
-            self.rows[entry_index as usize] = first_part_entry;
+        if second_part_entry.length > 0 {
             self.rows.insert(entry_index as usize + 1, second_part_entry);
+        }
+
+        if first_part_entry.length > 0 {
+            self.rows[entry_index as usize] = first_part_entry;
+        } else {
+            self.rows.remove(entry_index as usize);
         }
     }
 }
